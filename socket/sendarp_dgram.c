@@ -119,6 +119,7 @@ int main(int argc, char *argv[])
     struct ether_arp *arp;
     struct ifreq ifr;
     unsigned char buff[BUFLEN];
+    unsigned char src_mac[ETH_ALEN];
     struct sockaddr_ll toaddr;
     struct in_addr targetIP,srcIP;
 
@@ -146,10 +147,10 @@ int main(int argc, char *argv[])
         perror("get dev mac addr error");
         exit(1);
     }
-        
-    printf("Src mac is %02x:%02x:%02x:%02x:%02x:%02x\n",ifr.ifr_hwaddr.sa_data[0],ifr.ifr_hwaddr.sa_data[1],
-            ifr.ifr_hwaddr.sa_data[2],ifr.ifr_hwaddr.sa_data[3],ifr.ifr_hwaddr.sa_data[4],
-            ifr.ifr_hwaddr.sa_data[5]);
+    memcpy(src_mac,ifr.ifr_hwaddr.sa_data,ETH_ALEN);    
+    printf("Src mac is %02x:%02x:%02x:%02x:%02x:%02x\n",src_mac[0],src_mac[1],
+            src_mac[2],src_mac[3],src_mac[4],
+            src_mac[5]);
     if(-1 == ioctl(skfd,SIOCGIFADDR,&ifr)) {
         perror("get ip addr");
         exit(1);
@@ -164,7 +165,7 @@ int main(int argc, char *argv[])
     arp->arp_hln = ETH_ALEN;
     arp->arp_pln = 4;
     arp->arp_op = htons(ARPOP_REQUEST);
-    memcpy(arp->arp_sha,ifr.ifr_hwaddr.sa_data,ETH_ALEN);
+    memcpy(arp->arp_sha,src_mac,ETH_ALEN);
     memcpy(arp->arp_spa,&srcIP,sizeof(srcIP));
     memset(arp->arp_tha,0,ETH_ALEN);
     inet_pton(AF_INET,argv[2],&targetIP);
